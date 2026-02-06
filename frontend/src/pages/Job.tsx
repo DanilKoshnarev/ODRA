@@ -1,20 +1,25 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
 import { apiClient, AuditStatusResponse } from '../api/client';
 
-export const Job: React.FC = () => {
-  const { jobId } = useParams<{ jobId: string }>();
+interface JobProps {
+  jobId: string;
+  onReportReady: (jobId: string) => void;
+}
+
+export const Job: React.FC<JobProps> = ({ jobId, onReportReady }) => {
   const [status, setStatus] = useState<AuditStatusResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!jobId) return;
-
     const fetchStatus = async () => {
       try {
         const response = await apiClient.getAuditStatus(jobId);
         setStatus(response);
+        
+        if (response.status === 'completed') {
+          onReportReady(jobId);
+        }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to fetch status');
       } finally {
@@ -22,12 +27,11 @@ export const Job: React.FC = () => {
       }
     };
 
-    // Poll every 3 seconds
     fetchStatus();
     const interval = setInterval(fetchStatus, 3000);
 
     return () => clearInterval(interval);
-  }, [jobId]);
+  }, [jobId, onReportReady]);
 
   if (loading) return <div className="p-8">Loading...</div>;
   if (error) return <div className="p-8 text-red-600">{error}</div>;
@@ -94,12 +98,12 @@ export const Job: React.FC = () => {
         </div>
 
         {isCompleted && (
-          <a
-            href={`/report/${jobId}`}
+          <button
+            onClick={() => onReportReady(jobId)}
             className="inline-block px-6 py-3 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700"
           >
             View Report
-          </a>
+          </button>
         )}
       </div>
     </div>

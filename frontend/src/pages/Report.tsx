@@ -1,16 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
 import { apiClient, AuditReport } from '../api/client';
 
-export const Report: React.FC = () => {
-  const { jobId } = useParams<{ jobId: string }>();
+interface ReportProps {
+  jobId: string;
+}
+
+export const Report: React.FC<ReportProps> = ({ jobId }) => {
   const [report, setReport] = useState<AuditReport | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!jobId) return;
-
     const fetchReport = async () => {
       try {
         const response = await apiClient.getAuditReport(jobId);
@@ -98,7 +98,7 @@ export const Report: React.FC = () => {
                 <div className="flex justify-between items-start mb-2">
                   <div>
                     <p className="font-semibold text-gray-900">{item.doc_id}</p>
-                    <p className="text-sm text-gray-600">Source: {item.metadata.source}</p>
+                    <p className="text-sm text-gray-600">Source: {item.metadata?.source || 'unknown'}</p>
                   </div>
                   <div className="text-right">
                     <p className="text-lg font-bold text-blue-600">

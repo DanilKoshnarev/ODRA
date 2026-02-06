@@ -1,11 +1,14 @@
 import React, { useState } from 'react';
 import { apiClient } from '../api/client';
 
-export const Home: React.FC = () => {
+interface HomeProps {
+  onAuditStarted: (jobId: string) => void;
+}
+
+export const Home: React.FC<HomeProps> = ({ onAuditStarted }) => {
   const [goal, setGoal] = useState('');
   const [scope, setScope] = useState('');
   const [priority, setPriority] = useState(5);
-  const [jobId, setJobId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -16,7 +19,7 @@ export const Home: React.FC = () => {
 
     try {
       const response = await apiClient.runAudit({ goal, scope, priority });
-      setJobId(response.job_id);
+      onAuditStarted(response.job_id);
       setGoal('');
       setScope('');
     } catch (err) {
@@ -36,19 +39,6 @@ export const Home: React.FC = () => {
           <p className="text-gray-600 mb-8">
             Semantic document processing and RAG-powered audit reports
           </p>
-
-          {jobId ? (
-            <div className="bg-green-50 border border-green-200 rounded-lg p-6 mb-6">
-              <p className="text-green-800 font-semibold">Audit Started!</p>
-              <p className="text-green-700 text-sm">Job ID: {jobId}</p>
-              <a
-                href={`/job/${jobId}`}
-                className="inline-block mt-4 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
-              >
-                View Progress
-              </a>
-            </div>
-          ) : null}
 
           <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow-lg p-8">
             <div className="mb-6">
