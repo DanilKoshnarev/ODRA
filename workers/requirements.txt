@@ -1,0 +1,19 @@
+# Core
+python-dotenv==1.0.0
+tenacity==8.2.3
+
+# Database
+sqlalchemy==2.0.23
+clickhouse-driver==0.4.6
+
+# Embeddings
+sentence-transformers==2.2.2
+numpy==1.26.2
+
+# Task queue
+celery==5.3.4
+redis==5.0.0
+
+# Utils
+aiofiles==23.2.1
+pydantic==2.5.0

@@ -1,0 +1,94 @@
+version: '3.8'
+
+services:
+  # ClickHouse (optional - can be disabled for fallback mode)
+  clickhouse:
+    image: clickhouse/clickhouse-server:latest
+    environment:
+      CLICKHOUSE_DB: odra
+    ports:
+      - "9000:9000"
+      - "8123:8123"
+    volumes:
+      - ./clickhouse/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - clickhouse_data:/var/lib/clickhouse
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8123/ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis for task queue and caching
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Backend API
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      API_KEY: dev-key-change-in-production
+      DATABASE_URL: sqlite:///./odra.db
+      USE_CLICKHOUSE: "false"
+      REDIS_URL: redis://redis:6379/0
+      USE_CELERY: "false"
+      LLM_PROVIDER: mock
+      EMBEDDING_MODEL: sentence-transformers/all-MiniLM-L6-v2
+    volumes:
+      - ./backend:/app
+      - backend_db:/app
+    depends_on:
+      - redis
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "5173:5173"
+    environment:
+      VITE_API_URL: http://localhost:8000
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      - backend
+
+  # Worker (optional - processes ingest tasks)
+  worker:
+    build:
+      context: ./workers
+      dockerfile: Dockerfile
+    environment:
+      DATABASE_URL: sqlite:///./odra.db
+      REDIS_URL: redis://redis:6379/0
+    volumes:
+      - ./workers:/app
+      - ./backend:/app/backend
+    depends_on:
+      - backend
+      - redis
+
+volumes:
+  clickhouse_data:
+  backend_db:
+
+networks:
+  default:
+    name: odra_network
