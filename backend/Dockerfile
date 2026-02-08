@@ -9,7 +9,14 @@ RUN apt-get update && apt-get install -y \
 
 # Copy requirements
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# Retry pip install up to 3 times to mitigate transient network/read timeouts
+RUN set -eux; \
+    for i in 1 2 3; do \
+        pip install --no-cache-dir --timeout 120 -r requirements.txt && break || { \
+            echo "pip install failed, retrying ($i/3)"; \
+            sleep 5; \
+        }; \
+    done
 
 # Copy app
 COPY app/ app/

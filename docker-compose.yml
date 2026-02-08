@@ -42,52 +42,77 @@ services:
       USE_CLICKHOUSE: "false"
       REDIS_URL: redis://redis:6379/0
       USE_CELERY: "false"
-      LLM_PROVIDER: mock
+      LLM_PROVIDER: google
+      GOOGLE_API_KEY: AIzaSyA7Tba8rFRzBFAJ4J1QRQRXQeFugBXUV5c
       EMBEDDING_MODEL: sentence-transformers/all-MiniLM-L6-v2
     volumes:
       - ./backend:/app
       - backend_db:/app
     depends_on:
-      - redis
+      redis:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 10s
       timeout: 5s
       retries: 5
 
-  # Frontend
+  # Frontend with nginx
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      args:
+        VITE_API_URL: http://localhost:8000
     ports:
       - "5173:5173"
     environment:
       VITE_API_URL: http://localhost:8000
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:5173/"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
 
-  # Worker (optional - processes ingest tasks)
+  # Worker - processes ingest tasks from Redis queue
   worker:
     build:
       context: ./workers
       dockerfile: Dockerfile
     environment:
-      DATABASE_URL: sqlite:///./odra.db
       REDIS_URL: redis://redis:6379/0
+      DATABASE_URL: sqlite:///./odra.db
     volumes:
       - ./workers:/app
       - ./backend:/app/backend
+      - worker_db:/app
     depends_on:
-      - backend
-      - redis
+      redis:
+        condition: service_healthy
+      backend:
+        condition: service_healthy
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    restart: unless-stopped
+    command: >
+      python -c "
+      import sys
+      sys.path.insert(0, '/app/backend')
+      from workers.processor import main
+      import asyncio
+      asyncio.run(main())
+      "
 
 volumes:
   clickhouse_data:
   backend_db:
+  worker_db:
 
 networks:
   default:

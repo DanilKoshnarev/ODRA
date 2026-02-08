@@ -19,7 +19,7 @@ class Document(Base):
     title = Column(String)
     content = Column(Text)
     embedding = Column(Text)  # JSON serialized list of floats
-    metadata = Column(JSON)
+    doc_metadata = Column(JSON)
     created_at = Column(DateTime, default=datetime.utcnow)
     source = Column(String)
 

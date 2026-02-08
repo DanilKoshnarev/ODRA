@@ -48,7 +48,7 @@ async def ingest_document(payload: Dict[str, Any]) -> Dict[str, Any]:
             title=title,
             content=content[:5000],
             embedding=json.dumps(embedding),
-            metadata={**metadata, "shard_id": shard_id},
+            doc_metadata={**metadata, "shard_id": shard_id},
             source=metadata.get("source", "unknown"),
         )
         

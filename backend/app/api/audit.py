@@ -8,7 +8,6 @@ from app.models import (
     AuditReport, EvidenceItem, FeedbackRequest
 )
 from app.db import SessionLocal, AuditJob, Feedback
-from app.services.auditor import run_audit_job
 from app.services.task_queue import task_queue_service
 from app.security import verify_api_key
 
@@ -40,7 +39,7 @@ async def run_audit(
             id=job_id,
             goal=request.goal,
             scope=request.scope,
-            status="pending",
+            status="pending",  # type: ignore
             progress=0.0,
         )
         db.add(job)
@@ -61,7 +60,7 @@ async def run_audit(
         
         return AuditJobResponse(
             job_id=job_id,
-            status="pending",
+            status="pending",  # type: ignore
             created_at=datetime.utcnow(),
         )
     
@@ -79,12 +78,9 @@ async def get_audit_status(job_id: str, db = Depends(get_db)):
         if not job:
             raise HTTPException(status_code=404, detail="Job not found")
         
-        # Get task status
-        task_status = task_queue_service.get_task_status(job_id)
-        
         return AuditStatusResponse(
             job_id=job_id,
-            status=job.status,
+            status=job.status,  # type: ignore
             progress_percent=int(job.progress),
             total_documents=100,  # TODO: Count from database
             processed_documents=int(job.progress),
@@ -131,7 +127,7 @@ async def get_audit_report(job_id: str, db = Depends(get_db)):
         return AuditReport(
             job_id=job_id,
             goal=job.goal,
-            status=job.status,
+            status=job.status,  # type: ignore
             total_evidence=len(evidence),
             precision=results.get("precision", 0.0),
             recall=results.get("recall", 0.0),
@@ -173,7 +169,6 @@ async def submit_feedback(
             "status": "recorded",
             "feedback_id": feedback_record.id,
         }
-    
     
     except Exception as e:
         logger.error(f"Failed to submit feedback: {e}")

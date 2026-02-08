@@ -79,7 +79,7 @@ class AuditorPlanner:
                         "title": doc.title,
                         "snippet": doc.content[:200],
                         "score": float(score),
-                        "metadata": doc.metadata,
+                        "metadata": doc.doc_metadata,
                     })
             
             seen = set()

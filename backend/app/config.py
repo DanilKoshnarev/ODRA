@@ -26,9 +26,10 @@ class Settings(BaseSettings):
     EMBEDDING_DIMENSION: int = 384
     
     # LLM
-    LLM_PROVIDER: str = "mock"  # mock, anthropic, openai
+    LLM_PROVIDER: str = "mock"  # mock, anthropic, openai, google
     ANTHROPIC_API_KEY: str = ""
     OPENAI_API_KEY: str = ""
+    GOOGLE_API_KEY: str = ""
     
     # Processing
     MAX_WORKERS: int = 4

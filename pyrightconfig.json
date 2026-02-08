@@ -1,0 +1,13 @@
+{
+  "include": ["backend", "workers"],
+  "exclude": ["**/__pycache__", ".venv", "node_modules"],
+  "pythonVersion": "3.11",
+  "pythonPlatform": "Darwin",
+  "typeCheckingMode": "basic",
+  "reportMissingImports": false,
+  "reportMissingTypeStubs": false,
+  "reportUnusedImport": true,
+  "reportUnusedVariable": true,
+  "reportGeneralTypeIssues": true,
+  "stubPath": "typings"
+}
